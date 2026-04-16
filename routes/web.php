@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -9,6 +10,13 @@ Route::inertia('/', 'welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+    // Drive routes
+    Route::get('drive/{folder?}', [FileController::class, 'index'])->name('drive.index');
+    Route::post('drive/upload', [FileController::class, 'upload'])->name('drive.upload');
+    Route::post('drive/folder', [FileController::class, 'createFolder'])->name('drive.createFolder');
+    Route::put('drive/{file}/rename', [FileController::class, 'rename'])->name('drive.rename');
+    Route::delete('drive/{file}', [FileController::class, 'destroy'])->name('drive.destroy');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
