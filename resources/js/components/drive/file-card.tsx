@@ -13,8 +13,12 @@ import {
     Folder,
     Pencil,
     Trash2,
+    Share2,
+    Copy,
+    Link as LinkIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import type { DriveFile } from '@/types';
@@ -103,6 +107,30 @@ export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'd
         }
     };
 
+    const handleShare = () => {
+        const wasShared = file.is_shared;
+        router.post(`/drive/${file.id}/share`, {}, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                if (!wasShared) {
+                    const updatedFiles = (page.props as any).files as DriveFile[];
+                    const updatedFile = updatedFiles?.find((f) => f.id === file.id);
+                    if (updatedFile?.share_url) {
+                        navigator.clipboard.writeText(updatedFile.share_url);
+                        toast.success('Link compartilhado e copiado com sucesso!');
+                    }
+                }
+            },
+        });
+    };
+
+    const copyShareLink = () => {
+        if (file.share_url) {
+            navigator.clipboard.writeText(file.share_url);
+            toast.success('Link de compartilhamento copiado!');
+        }
+    };
+
     const isImage = file.mime_type?.startsWith('image/') && file.url;
 
     if (viewMode === 'list') {
@@ -142,6 +170,12 @@ export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'd
                             {file.name}
                         </button>
                     )}
+                    {file.is_shared && (
+                        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-blue-500 font-medium">
+                            <Share2 className="size-2.5" />
+                            <span>Compartilhado</span>
+                        </div>
+                    )}
                 </div>
 
                 <span className="hidden text-xs text-muted-foreground sm:block">{file.formatted_size}</span>
@@ -160,6 +194,17 @@ export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'd
                             <DropdownMenuItem onClick={handleDownload}>
                                 <Download className="size-4" />
                                 Download
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleShare}>
+                            <Share2 className={cn("size-4", file.is_shared && "text-red-500")} />
+                            {file.is_shared ? 'Desativar link' : 'Compartilhar'}
+                        </DropdownMenuItem>
+                        {file.is_shared && (
+                            <DropdownMenuItem onClick={copyShareLink}>
+                                <Copy className="size-4" />
+                                Copiar link
                             </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -218,9 +263,17 @@ export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'd
                     ) : (
                         <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
                     )}
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                        {file.is_folder ? 'Pasta' : file.formatted_size}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">
+                            {file.is_folder ? 'Pasta' : file.formatted_size}
+                        </p>
+                        {file.is_shared && (
+                            <span className="flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-500 uppercase tracking-tighter shadow-sm whitespace-nowrap">
+                                <Share2 className="size-2" strokeWidth={3} />
+                                Público
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <DropdownMenu>
@@ -236,6 +289,17 @@ export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'd
                             <DropdownMenuItem onClick={handleDownload}>
                                 <Download className="size-4" />
                                 Download
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleShare}>
+                            <Share2 className={cn("size-4", file.is_shared && "text-red-500")} />
+                            {file.is_shared ? 'Desativar link' : 'Compartilhar'}
+                        </DropdownMenuItem>
+                        {file.is_shared && (
+                            <DropdownMenuItem onClick={copyShareLink}>
+                                <Copy className="size-4" />
+                                Copiar link
                             </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />

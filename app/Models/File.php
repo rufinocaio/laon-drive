@@ -22,14 +22,26 @@ class File extends Model
         'url',
         'is_folder',
         'storage_provider',
+        'share_token',
+        'is_shared',
     ];
 
     protected $casts = [
         'is_folder' => 'boolean',
+        'is_shared' => 'boolean',
         'size' => 'integer',
     ];
 
-    protected $appends = ['formatted_size'];
+    protected $appends = ['formatted_size', 'share_url'];
+
+    public function getShareUrlAttribute(): ?string
+    {
+        if (!$this->share_token) {
+            return null;
+        }
+
+        return url("/s/{$this->share_token}");
+    }
 
     public function user(): BelongsTo
     {

@@ -24,11 +24,14 @@ return new class extends Migration
             $table->boolean('is_folder')->default(false);
             $table->timestamps();
 
-            $table->foreign('parent_id')->references('id')->on('files')->cascadeOnDelete();
             $table->index('user_id');
             $table->index('parent_id');
             $table->index('file_key');
             $table->index(['user_id', 'parent_id']);
+        });
+
+        Schema::table('files', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('files')->cascadeOnDelete();
         });
     }
 

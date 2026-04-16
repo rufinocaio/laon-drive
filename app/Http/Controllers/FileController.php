@@ -9,6 +9,7 @@ use App\Services\StorageManagerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class FileController extends Controller
@@ -189,6 +190,85 @@ class FileController extends Controller
         $file->delete();
 
         return back()->with('success', 'Excluído com sucesso!');
+    }
+
+    public function toggleShare(File $file)
+    {
+        if ($file->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($file->is_shared) {
+            $file->update([
+                'is_shared' => false,
+                'share_token' => null,
+            ]);
+            return back()->with('success', 'Compartilhamento desativado.');
+        }
+
+        $file->update([
+            'is_shared' => true,
+            'share_token' => (string) Str::uuid(),
+        ]);
+
+        return back()->with('success', 'Link de compartilhamento gerado com sucesso!');
+    }
+
+    public function publicShow($token)
+    {
+        $file = File::where('share_token', $token)
+            ->where('is_shared', true)
+            ->firstOrFail();
+
+        $this->storageManagerService->forFile($file);
+
+        if (str_starts_with($file->storage_provider, 's3:')) {
+            try {
+                $file->url = Storage::disk('custom_s3')->temporaryUrl(
+                    $file->file_key,
+                    now()->addMinutes(15)
+                );
+            } catch (\Throwable $e) {
+                Log::warning('[S3 DEBUG] Public preview failed', ['file_id' => $file->id]);
+            }
+        }
+
+        return Inertia::render('drive/shared', [
+            'file' => $file,
+        ]);
+    }
+
+    public function publicDownload($token)
+    {
+        $file = File::where('share_token', $token)
+            ->where('is_shared', true)
+            ->firstOrFail();
+
+        $this->storageManagerService->forFile($file);
+
+        if (str_starts_with($file->storage_provider, 's3:')) {
+            return Storage::disk('custom_s3')->download($file->file_key, $file->original_name);
+        }
+
+        // Para UploadThing, forçamos o download buscando o conteúdo e retornando como stream de forma eficiente
+        return response()->streamDownload(function () use ($file) {
+            $context = stream_context_create([
+                "ssl" => [
+                    "verify_peer" => false,
+                    "verify_peer_name" => false,
+                ],
+            ]);
+            $handle = fopen($file->url, 'rb', false, $context);
+            if ($handle) {
+                while (!feof($handle)) {
+                    echo fread($handle, 8192);
+                    flush();
+                }
+                fclose($handle);
+            }
+        }, $file->original_name, [
+            'Content-Type' => $file->mime_type ?? 'application/octet-stream',
+        ]);
     }
 
     private function buildBreadcrumbs(?File $folder, string $rootName = 'Bucket Principal'): array

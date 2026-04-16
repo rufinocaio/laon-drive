@@ -14,6 +14,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('drive/folder', [FileController::class, 'createFolder'])->name('drive.createFolder');
     Route::put('drive/{file}/rename', [FileController::class, 'rename'])->name('drive.rename');
     Route::delete('drive/{file}', [FileController::class, 'destroy'])->name('drive.destroy');
+    Route::post('drive/{file}/share', [FileController::class, 'toggleShare'])->name('drive.share');
 });
+
+Route::get('/s/{token}', [FileController::class, 'publicShow'])->name('drive.publicShow');
+Route::get('/s/{token}/download', [FileController::class, 'publicDownload'])->name('drive.publicDownload');
 
 require __DIR__ . '/settings.php';

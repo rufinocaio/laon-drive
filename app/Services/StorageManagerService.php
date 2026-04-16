@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\StorageProviderInterface;
 use App\Models\User;
+use App\Models\File;
 
 class StorageManagerService
 {
@@ -39,6 +40,19 @@ class StorageManagerService
         }
 
         return $this;
+    }
+
+    public function forFile(File $file): self
+    {
+        $provider = $file->storage_provider;
+        $configId = null;
+
+        if ($provider && str_starts_with($provider, 's3:')) {
+            $parts = explode(':', $provider);
+            $configId = $parts[1] ?? null;
+        }
+
+        return $this->forUser($file->user, $configId);
     }
 
     public function getProvider(): StorageProviderInterface

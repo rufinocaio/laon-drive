@@ -9,6 +9,9 @@ export type DriveFile = {
     parent_id: string | null;
     url: string | null;
     file_key: string | null;
+    is_shared: boolean;
+    share_token: string | null;
+    share_url: string | null;
     created_at: string;
     updated_at: string;
 };
