@@ -4,14 +4,11 @@ use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::get('/', function () {
+    return redirect()->route('drive.index', ['folder' => null]);
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-
-    // Drive routes
     Route::get('drive/{folder?}', [FileController::class, 'index'])->name('drive.index');
     Route::post('drive/upload', [FileController::class, 'upload'])->name('drive.upload');
     Route::post('drive/folder', [FileController::class, 'createFolder'])->name('drive.createFolder');

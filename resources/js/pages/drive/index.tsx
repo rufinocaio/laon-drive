@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { CloudUpload, FolderPlus, Grid3X3, List, ChevronRight } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+
 
 import { CreateFolderModal } from '@/components/drive/create-folder-modal';
 import { EmptyState } from '@/components/drive/empty-state';
@@ -31,19 +32,28 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
     const [renameFile, setRenameFile] = useState<DriveFile | null>(null);
     const [previewFile, setPreviewFile] = useState<DriveFile | null>(null);
     const [isDraggingPage, setIsDraggingPage] = useState(false);
+    const dragCounter = useRef(0);
     const [selectedUploadDisk, setSelectedUploadDisk] = useState<string>(currentDisk);
     const diskQuery = currentDisk !== 'default' ? `?disk=${encodeURIComponent(currentDisk)}` : '';
 
     const parentId = currentFolder?.id ?? null;
 
+    const handlePageDragEnter = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        dragCounter.current++;
+        if (dragCounter.current === 1) {
+            setIsDraggingPage(true);
+        }
+    }, []);
+
     const handlePageDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
-        setIsDraggingPage(true);
     }, []);
 
     const handlePageDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
-        if (e.currentTarget === e.target) {
+        dragCounter.current--;
+        if (dragCounter.current === 0) {
             setIsDraggingPage(false);
         }
     }, []);
@@ -51,7 +61,9 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
     const handlePageDrop = useCallback(
         (e: React.DragEvent) => {
             e.preventDefault();
+            dragCounter.current = 0;
             setIsDraggingPage(false);
+
             if (e.dataTransfer.files.length > 0) {
                 const formData = new FormData();
                 Array.from(e.dataTransfer.files).forEach((file) => formData.append('files[]', file));
@@ -70,13 +82,16 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
 
             <div
                 className="relative flex h-full flex-1 flex-col overflow-hidden"
+                onDragEnter={handlePageDragEnter}
                 onDragOver={handlePageDragOver}
                 onDragLeave={handlePageDragLeave}
                 onDrop={handlePageDrop}
             >
+
                 {/* Full-page drag overlay */}
                 {isDraggingPage && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
+
                         <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-blue-500 bg-blue-500/5 p-12">
                             <div className="flex size-16 items-center justify-center rounded-2xl bg-blue-500/15">
                                 <CloudUpload className="size-8 text-blue-500 animate-bounce" />
@@ -223,8 +238,9 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
 
                     {/* Storage indicator */}
                     <div className="mt-auto pt-4">
-                        <StorageIndicator used={storageUsed} formatted={storageFormatted} />
+                        <StorageIndicator used={storageUsed} formatted={storageFormatted} showLimit={currentDisk === 'default'} />
                     </div>
+
                 </div>
             </div>
 

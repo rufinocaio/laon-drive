@@ -94,7 +94,7 @@ class UploadThingService implements StorageProviderInterface
                 'body' => $response->body(),
             ]);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 Log::error('[UT DEBUG] prepareUpload FALHOU', [
                     'status' => $response->status(),
                     'body' => $response->body(),
@@ -112,7 +112,7 @@ class UploadThingService implements StorageProviderInterface
                 'presignedUrl' => $presignedUrl ? substr($presignedUrl, 0, 80) . '...' : null,
             ]);
 
-            if (! $fileKey || ! $presignedUrl) {
+            if (!$fileKey || !$presignedUrl) {
                 Log::error('[UT DEBUG] Faltando key ou url na resposta do prepareUpload', [
                     'response' => $data,
                 ]);
@@ -145,7 +145,7 @@ class UploadThingService implements StorageProviderInterface
                 'body' => substr($uploadResponse->body(), 0, 500),
             ]);
 
-            if (! $uploadResponse->successful() && $uploadResponse->status() !== 204) {
+            if (!$uploadResponse->successful() && $uploadResponse->status() !== 204) {
                 Log::error('[UT DEBUG] PUT upload FAILED', [
                     'status' => $uploadResponse->status(),
                     'body' => $uploadResponse->body(),
@@ -212,7 +212,7 @@ class UploadThingService implements StorageProviderInterface
                 'body' => $response->body(),
             ]);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 Log::error('[UT DEBUG] Delete FAILED', [
                     'status' => $response->status(),
                     'body' => $response->body(),

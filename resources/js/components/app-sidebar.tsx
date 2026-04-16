@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, HardDrive, LayoutGrid } from 'lucide-react';
+import { BookOpen, FolderGit2, HardDrive } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,18 +13,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import drive from '@/routes/drive';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Drive',
-        href: '/drive',
+        title: 'Meus Arquivos',
+        href: drive.index(),
         icon: HardDrive,
     },
 ];
@@ -49,7 +44,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={drive.index()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

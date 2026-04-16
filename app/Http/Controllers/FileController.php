@@ -65,14 +65,22 @@ class FileController extends Controller
             });
         }
 
-        $breadcrumbs = $this->buildBreadcrumbs($currentFolder);
+        $storageConfigs = $user->storageConfigs()->select(['id', 'name'])->get();
+
+        $bucketName = $disk === 'default' ? 'Bucket Principal' : 'Drive';
+        if ($disk !== 'default') {
+            $config = $storageConfigs->firstWhere('id', (int) $disk);
+            if ($config) {
+                $bucketName = $config->name;
+            }
+        }
+
+        $breadcrumbs = $this->buildBreadcrumbs($currentFolder, $bucketName);
 
         $storageUsed = File::where('user_id', $user->id)
             ->where('storage_provider', $expectedProvider)
             ->whereNotNull('size')
             ->sum('size');
-
-        $storageConfigs = $user->storageConfigs()->select(['id', 'name'])->get();
 
         return Inertia::render('drive/index', [
             'files' => $files,
@@ -83,6 +91,7 @@ class FileController extends Controller
             'storageConfigs' => $storageConfigs,
             'currentDisk' => $disk,
         ]);
+
     }
 
     public function upload(UploadFileRequest $request)
@@ -182,13 +191,14 @@ class FileController extends Controller
         return back()->with('success', 'Excluído com sucesso!');
     }
 
-    private function buildBreadcrumbs(?File $folder): array
+    private function buildBreadcrumbs(?File $folder, string $rootName = 'Bucket Principal'): array
     {
         $breadcrumbs = [
-            ['id' => null, 'name' => 'Drive'],
+            ['id' => null, 'name' => $rootName],
         ];
 
-        if (! $folder) {
+
+        if (!$folder) {
             return $breadcrumbs;
         }
 

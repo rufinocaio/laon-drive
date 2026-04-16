@@ -51,14 +51,14 @@ export default function Security({
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Configurações de segurança" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <h1 className="sr-only">Configurações de segurança</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Update password"
+                    title="Atualizar senha"
                     description="Ensure your account is using a long, random password to stay secure"
                 />
 
@@ -88,7 +88,7 @@ export default function Security({
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="current_password">
-                                    Current password
+                                    Senha atual
                                 </Label>
 
                                 <PasswordInput
@@ -104,7 +104,7 @@ export default function Security({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
+                                <Label htmlFor="password">Nova senha</Label>
 
                                 <PasswordInput
                                     id="password"
@@ -120,7 +120,7 @@ export default function Security({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                    Confirmar senha
                                 </Label>
 
                                 <PasswordInput
@@ -141,7 +141,7 @@ export default function Security({
                                     disabled={processing}
                                     data-test="update-password-button"
                                 >
-                                    Save password
+                                    Salvar senha
                                 </Button>
                             </div>
                         </>
@@ -153,15 +153,13 @@ export default function Security({
                 <div className="space-y-6">
                     <Heading
                         variant="small"
-                        title="Two-factor authentication"
-                        description="Manage your two-factor authentication settings"
+                        title="Autenticação de dois fatores"
+                        description="Gerencie as configurações de autenticação de dois fatores"
                     />
                     {twoFactorEnabled ? (
                         <div className="flex flex-col items-start justify-start space-y-4">
                             <p className="text-sm text-muted-foreground">
-                                You will be prompted for a secure, random pin
-                                during login, which you can retrieve from the
-                                TOTP-supported application on your phone.
+                                Você será solicitado a inserir um PIN seguro e aleatório durante o login, que você pode recuperar no aplicativo suportado por TOTP no seu telefone.
                             </p>
 
                             <div className="relative inline">
@@ -172,7 +170,7 @@ export default function Security({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Disable 2FA
+                                            Desabilitar 2FA
                                         </Button>
                                     )}
                                 </Form>
@@ -187,10 +185,7 @@ export default function Security({
                     ) : (
                         <div className="flex flex-col items-start justify-start space-y-4">
                             <p className="text-sm text-muted-foreground">
-                                When you enable two-factor authentication, you
-                                will be prompted for a secure pin during login.
-                                This pin can be retrieved from a TOTP-supported
-                                application on your phone.
+                                Quando você habilitar a autenticação de dois fatores, você será solicitado a inserir um PIN seguro durante o login. Este PIN pode ser recuperado de um aplicativo suportado por TOTP no seu telefone.
                             </p>
 
                             <div>
@@ -199,7 +194,7 @@ export default function Security({
                                         onClick={() => setShowSetupModal(true)}
                                     >
                                         <ShieldCheck />
-                                        Continue setup
+                                        Continuar configuração
                                     </Button>
                                 ) : (
                                     <Form
@@ -213,7 +208,7 @@ export default function Security({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Enable 2FA
+                                                Habilitar 2FA
                                             </Button>
                                         )}
                                     </Form>

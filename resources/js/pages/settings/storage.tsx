@@ -81,15 +81,15 @@ export default function Storage({
 
     return (
         <>
-            <Head title="Storage settings" />
+            <Head title="Configurações de armazenamento" />
 
-            <h1 className="sr-only">Storage settings</h1>
+            <h1 className="sr-only">Configurações de armazenamento</h1>
 
             <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <Heading
                         variant="small"
-                        title="Storage Configurations"
+                        title="Configurações de armazenamento"
                         description="Gerencie seus provedores de armazenamento customizados (S3, DigitalOcean, etc)."
                     />
                     {!isFormOpen && (
