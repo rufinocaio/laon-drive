@@ -9,22 +9,19 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
 
 type Props = {
     status?: string;
-    canResetPassword: boolean;
     canRegister: boolean;
 };
 
 export default function Login({
     status,
-    canResetPassword,
     canRegister,
 }: Props) {
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Entrar" />
 
             <Form
                 {...store.form()}
@@ -35,7 +32,7 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Endereço de Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -51,16 +48,7 @@ export default function Login({
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
+                                    <Label htmlFor="password">Senha</Label>
                                 </div>
                                 <PasswordInput
                                     id="password"
@@ -79,7 +67,7 @@ export default function Login({
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">Lembrar-me</Label>
                             </div>
 
                             <Button
@@ -90,15 +78,15 @@ export default function Login({
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                Entrar
                             </Button>
                         </div>
 
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
+                                Não tem uma conta?{' '}
                                 <TextLink href={register()} tabIndex={5}>
-                                    Sign up
+                                    Criar conta
                                 </TextLink>
                             </div>
                         )}
@@ -116,6 +104,6 @@ export default function Login({
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Faça login na sua conta Laon Drive!',
+    description: 'Digite seu email e senha abaixo para fazer login',
 };
