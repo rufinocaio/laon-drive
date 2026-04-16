@@ -102,7 +102,20 @@ class FileController extends Controller
         $uploadedFiles = $request->file('files');
         $successCount = 0;
 
-        $storageManager = $this->storageManagerService->forUser($user, $request->input('storage_config_id'));
+        $storageConfigId = $request->input('storage_config_id');
+
+        // Se estivermos em uma pasta, herdamos o provedor dela para manter consistência
+        if ($parentId) {
+            $parent = File::where('id', $parentId)->where('user_id', $user->id)->first();
+            if ($parent && $parent->storage_provider) {
+                $storageConfigId = null;
+                if (str_starts_with($parent->storage_provider, 's3:')) {
+                    $storageConfigId = explode(':', $parent->storage_provider)[1] ?? null;
+                }
+            }
+        }
+
+        $storageManager = $this->storageManagerService->forUser($user, $storageConfigId);
         $provider = $storageManager->getProvider();
 
         foreach ($uploadedFiles as $file) {
@@ -141,15 +154,28 @@ class FileController extends Controller
     public function createFolder(CreateFolderRequest $request)
     {
         $user = auth()->user();
-        $disk = $request->input('storage_config_id', 'default');
-        $provider = $disk === 'default' ? 'uploadthing' : 's3:' . $disk;
+        $parentId = $request->input('parent_id');
+        $storageConfigId = $request->input('storage_config_id');
+
+        // Se estivermos em uma pasta, herdamos o provedor dela para manter consistência
+        if ($parentId) {
+            $parent = File::where('id', $parentId)->where('user_id', $user->id)->first();
+            if ($parent && $parent->storage_provider) {
+                $storageConfigId = null;
+                if (str_starts_with($parent->storage_provider, 's3:')) {
+                    $storageConfigId = explode(':', $parent->storage_provider)[1] ?? null;
+                }
+            }
+        }
+
+        $storageManager = $this->storageManagerService->forUser($user, $storageConfigId);
 
         File::create([
             'user_id' => $user->id,
-            'parent_id' => $request->input('parent_id'),
+            'parent_id' => $parentId,
             'name' => $request->input('name'),
             'is_folder' => true,
-            'storage_provider' => $provider,
+            'storage_provider' => $storageManager->getCurrentProviderName(),
         ]);
 
         return back()->with('success', 'Pasta criada com sucesso!');
