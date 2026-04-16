@@ -5,20 +5,25 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateFolderRequest;
 use App\Http\Requests\UploadFileRequest;
 use App\Models\File;
-use App\Services\UploadThingService;
+use App\Services\StorageManagerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class FileController extends Controller
 {
     public function __construct(
-        private UploadThingService $uploadThingService
+        private StorageManagerService $storageManagerService
     ) {}
 
-    public function index(?string $folder = null)
+    public function index(Request $request, ?string $folder = null)
     {
         $user = auth()->user();
         $currentFolder = null;
+
+        $disk = $request->query('disk', 'default');
+        $expectedProvider = $disk === 'default' ? 'uploadthing' : 's3:' . $disk;
 
         if ($folder) {
             $currentFolder = File::where('id', $folder)
@@ -29,15 +34,45 @@ class FileController extends Controller
 
         $files = File::where('user_id', $user->id)
             ->where('parent_id', $folder)
+            ->where('storage_provider', $expectedProvider)
             ->orderByDesc('is_folder')
             ->orderBy('name')
             ->get();
 
+        if ($disk !== 'default') {
+            $this->storageManagerService->forUser($user, (string) $disk);
+
+            $files->transform(function (File $file) {
+                if ($file->is_folder || empty($file->file_key)) {
+                    return $file;
+                }
+
+                try {
+                    // Usa URL assinada de curta duração para previews de buckets privados.
+                    $file->url = Storage::disk('custom_s3')->temporaryUrl(
+                        $file->file_key,
+                        now()->addMinutes(15)
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('[S3 DEBUG] Failed to generate temporary preview URL', [
+                        'file_id' => $file->id,
+                        'file_key' => $file->file_key,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+
+                return $file;
+            });
+        }
+
         $breadcrumbs = $this->buildBreadcrumbs($currentFolder);
 
         $storageUsed = File::where('user_id', $user->id)
+            ->where('storage_provider', $expectedProvider)
             ->whereNotNull('size')
             ->sum('size');
+
+        $storageConfigs = $user->storageConfigs()->select(['id', 'name'])->get();
 
         return Inertia::render('drive/index', [
             'files' => $files,
@@ -45,6 +80,8 @@ class FileController extends Controller
             'breadcrumbs' => $breadcrumbs,
             'storageUsed' => $storageUsed,
             'storageFormatted' => $this->formatBytes($storageUsed),
+            'storageConfigs' => $storageConfigs,
+            'currentDisk' => $disk,
         ]);
     }
 
@@ -55,8 +92,11 @@ class FileController extends Controller
         $uploadedFiles = $request->file('files');
         $successCount = 0;
 
+        $storageManager = $this->storageManagerService->forUser($user, $request->input('storage_config_id'));
+        $provider = $storageManager->getProvider();
+
         foreach ($uploadedFiles as $file) {
-            $result = $this->uploadThingService->uploadFile($file);
+            $result = $provider->uploadFile($file);
 
             if ($result) {
                 File::create([
@@ -69,6 +109,7 @@ class FileController extends Controller
                     'file_key' => $result['key'],
                     'url' => $result['url'],
                     'is_folder' => false,
+                    'storage_provider' => $storageManager->getCurrentProviderName(),
                 ]);
                 $successCount++;
             }
@@ -90,12 +131,15 @@ class FileController extends Controller
     public function createFolder(CreateFolderRequest $request)
     {
         $user = auth()->user();
+        $disk = $request->input('storage_config_id', 'default');
+        $provider = $disk === 'default' ? 'uploadthing' : 's3:' . $disk;
 
         File::create([
             'user_id' => $user->id,
             'parent_id' => $request->input('parent_id'),
             'name' => $request->input('name'),
             'is_folder' => true,
+            'storage_provider' => $provider,
         ]);
 
         return back()->with('success', 'Pasta criada com sucesso!');
@@ -122,14 +166,17 @@ class FileController extends Controller
             abort(403);
         }
 
-        $fileKeys = $file->getAllFileKeys();
+        // Garante que o StorageManager tenha o contexto do usuário antes de resolver provedores.
+        $this->storageManagerService->forUser(auth()->user());
 
-        // Deleta na api UploadThing
-        if (!empty($fileKeys)) {
-            $this->uploadThingService->deleteFiles($fileKeys);
+        $keysByProvider = $file->getKeysByProvider();
+
+        foreach ($keysByProvider as $provider => $fileKeys) {
+            if (!empty($fileKeys)) {
+                $this->storageManagerService->getProviderByName($provider)->deleteFiles($fileKeys);
+            }
         }
 
-        // Deleta no banco de dados
         $file->delete();
 
         return back()->with('success', 'Excluído com sucesso!');

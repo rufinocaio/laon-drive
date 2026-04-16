@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\StorageProviderInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class UploadThingService
+class UploadThingService implements StorageProviderInterface
 {
     private string $token;
 
@@ -61,7 +62,6 @@ class UploadThingService
     public function uploadFile(UploadedFile $file): ?array
     {
         try {
-            // === DEBUG: Informações do arquivo ===
             Log::info('[UT DEBUG] 1. Upload started', [
                 'fileName' => $file->getClientOriginalName(),
                 'fileSize' => $file->getSize(),
@@ -69,7 +69,6 @@ class UploadThingService
                 'realPath' => $file->getRealPath(),
             ]);
 
-            // === Passo 1: prepareUpload ===
             $payload = [
                 'fileName' => $file->getClientOriginalName(),
                 'fileSize' => $file->getSize(),
@@ -121,7 +120,6 @@ class UploadThingService
                 return null;
             }
 
-            // === Passo 2: PUT do binário ===
             $fileContents = file_get_contents($file->getRealPath());
             $fileContentLength = strlen($fileContents);
 
@@ -131,7 +129,7 @@ class UploadThingService
                 'contentLength' => $fileContentLength,
             ]);
 
-            // Faz upload como multipart/form-data com o campo 'file' (conforme documentação do UT)
+            // Faz upload via multipart/form-data conforme documentação do UploadThing
             $uploadResponse = Http::send('PUT', $presignedUrl, [
                 'multipart' => [
                     [

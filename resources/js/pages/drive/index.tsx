@@ -10,16 +10,29 @@ import { RenameModal } from '@/components/drive/rename-modal';
 import { StorageIndicator } from '@/components/drive/storage-indicator';
 import { UploadModal } from '@/components/drive/upload-modal';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { DriveFile, DrivePageProps } from '@/types';
 
-export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, storageFormatted }: DrivePageProps) {
+interface StorageConfig {
+    id: number;
+    name: string;
+}
+
+interface ExtendedDrivePageProps extends DrivePageProps {
+    storageConfigs: StorageConfig[];
+    currentDisk?: string;
+}
+
+export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, storageFormatted, storageConfigs, currentDisk = 'default' }: ExtendedDrivePageProps) {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [uploadOpen, setUploadOpen] = useState(false);
     const [folderOpen, setFolderOpen] = useState(false);
     const [renameFile, setRenameFile] = useState<DriveFile | null>(null);
     const [previewFile, setPreviewFile] = useState<DriveFile | null>(null);
     const [isDraggingPage, setIsDraggingPage] = useState(false);
+    const [selectedUploadDisk, setSelectedUploadDisk] = useState<string>(currentDisk);
+    const diskQuery = currentDisk !== 'default' ? `?disk=${encodeURIComponent(currentDisk)}` : '';
 
     const parentId = currentFolder?.id ?? null;
 
@@ -43,6 +56,7 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
                 const formData = new FormData();
                 Array.from(e.dataTransfer.files).forEach((file) => formData.append('files[]', file));
                 if (parentId) formData.append('parent_id', parentId);
+                if (selectedUploadDisk !== 'default') formData.append('storage_config_id', selectedUploadDisk);
 
                 router.post('/drive/upload', formData, { forceFormData: true });
             }
@@ -114,14 +128,34 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
                                 <FolderPlus className="size-4" />
                                 <span className="hidden sm:inline">Nova Pasta</span>
                             </Button>
-                            <Button
-                                size="sm"
-                                onClick={() => setUploadOpen(true)}
-                                className="bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:brightness-110"
-                            >
-                                <CloudUpload className="size-4" />
-                                <span className="hidden sm:inline">Upload</span>
-                            </Button>
+
+                            <div className="flex items-center space-x-2">
+                                <Select value={selectedUploadDisk} onValueChange={(val) => {
+                                    setSelectedUploadDisk(val);
+                                    router.get('/drive', { disk: val }, { preserveState: false });
+                                }}>
+                                    <SelectTrigger className="w-[180px] h-9">
+                                        <SelectValue placeholder="Destino do Upload" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="default">Bucket Principal</SelectItem>
+                                        {storageConfigs.map((config) => (
+                                            <SelectItem key={config.id} value={config.id.toString()}>
+                                                {config.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Button
+                                    size="sm"
+                                    onClick={() => setUploadOpen(true)}
+                                    className="bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:brightness-110"
+                                >
+                                    <CloudUpload className="size-4" />
+                                    <span className="hidden sm:inline">Upload</span>
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -135,7 +169,7 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
                                         <span className="font-medium text-foreground">{crumb.name}</span>
                                     ) : (
                                         <Link
-                                            href={crumb.id ? `/drive/${crumb.id}` : '/drive'}
+                                            href={crumb.id ? `/drive/${crumb.id}${diskQuery}` : `/drive${diskQuery}`}
                                             className="text-muted-foreground transition-colors hover:text-blue-500"
                                         >
                                             {crumb.name}
@@ -158,6 +192,7 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
                                     key={file.id}
                                     file={file}
                                     viewMode="grid"
+                                    currentDisk={currentDisk}
                                     onRename={setRenameFile}
                                     onPreview={setPreviewFile}
                                 />
@@ -178,6 +213,7 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
                                     key={file.id}
                                     file={file}
                                     viewMode="list"
+                                    currentDisk={currentDisk}
                                     onRename={setRenameFile}
                                     onPreview={setPreviewFile}
                                 />
@@ -193,8 +229,8 @@ export default function Drive({ files, currentFolder, breadcrumbs, storageUsed, 
             </div>
 
             {/* Modals */}
-            <UploadModal open={uploadOpen} onOpenChange={setUploadOpen} parentId={parentId} />
-            <CreateFolderModal open={folderOpen} onOpenChange={setFolderOpen} parentId={parentId} />
+            <UploadModal open={uploadOpen} onOpenChange={setUploadOpen} parentId={parentId} storageConfigId={selectedUploadDisk !== 'default' ? Number(selectedUploadDisk) : null} />
+            <CreateFolderModal open={folderOpen} onOpenChange={setFolderOpen} parentId={parentId} storageConfigId={selectedUploadDisk !== 'default' ? Number(selectedUploadDisk) : null} />
             <RenameModal file={renameFile} open={!!renameFile} onOpenChange={(v) => !v && setRenameFile(null)} />
             <FilePreviewModal file={previewFile} open={!!previewFile} onOpenChange={(v) => !v && setPreviewFile(null)} />
         </>

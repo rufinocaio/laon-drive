@@ -32,6 +32,7 @@ interface FileCardProps {
     onRename: (file: DriveFile) => void;
     onPreview: (file: DriveFile) => void;
     viewMode: 'grid' | 'list';
+    currentDisk?: string;
 }
 
 const mimeIconMap: Record<string, { icon: typeof File; color: string; bg: string }> = {
@@ -81,9 +82,11 @@ function formatDate(dateStr: string): string {
     });
 }
 
-export function FileCard({ file, onRename, onPreview, viewMode }: FileCardProps) {
+export function FileCard({ file, onRename, onPreview, viewMode, currentDisk = 'default' }: FileCardProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const { icon: Icon, color, bg } = getFileIcon(file);
+    const diskQuery = currentDisk !== 'default' ? `?disk=${encodeURIComponent(currentDisk)}` : '';
+    const folderHref = `/drive/${file.id}${diskQuery}`;
 
     const handleDelete = () => {
         if (!confirm(`Tem certeza que deseja excluir "${file.name}"?`)) return;
@@ -112,7 +115,7 @@ export function FileCard({ file, onRename, onPreview, viewMode }: FileCardProps)
             >
                 {file.is_folder ? (
                     <Link
-                        href={`/drive/${file.id}`}
+                        href={folderHref}
                         className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-600/15"
                     >
                         <Icon className={cn('size-5', color)} />
@@ -128,7 +131,7 @@ export function FileCard({ file, onRename, onPreview, viewMode }: FileCardProps)
 
                 <div className="min-w-0 flex-1">
                     {file.is_folder ? (
-                        <Link href={`/drive/${file.id}`} className="block truncate text-sm font-medium text-foreground hover:text-blue-500">
+                        <Link href={folderHref} className="block truncate text-sm font-medium text-foreground hover:text-blue-500">
                             {file.name}
                         </Link>
                     ) : (
@@ -180,7 +183,7 @@ export function FileCard({ file, onRename, onPreview, viewMode }: FileCardProps)
         >
             {/* Thumbnail / Icon area */}
             {file.is_folder ? (
-                <Link href={`/drive/${file.id}`} className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-blue-500/5 to-violet-500/5 transition-colors duration-300 group-hover:from-blue-500/10 group-hover:to-violet-500/10">
+                <Link href={folderHref} className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-blue-500/5 to-violet-500/5 transition-colors duration-300 group-hover:from-blue-500/10 group-hover:to-violet-500/10">
                     <Icon className={cn('size-12 transition-transform duration-300 group-hover:scale-110', color)} />
                 </Link>
             ) : isImage ? (
@@ -209,7 +212,7 @@ export function FileCard({ file, onRename, onPreview, viewMode }: FileCardProps)
             <div className="flex items-center gap-2 p-3">
                 <div className="min-w-0 flex-1">
                     {file.is_folder ? (
-                        <Link href={`/drive/${file.id}`} className="block truncate text-sm font-medium text-foreground transition-colors hover:text-blue-500">
+                        <Link href={folderHref} className="block truncate text-sm font-medium text-foreground transition-colors hover:text-blue-500">
                             {file.name}
                         </Link>
                     ) : (

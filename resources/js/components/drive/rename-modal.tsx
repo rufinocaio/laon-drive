@@ -33,7 +33,7 @@ export function RenameModal({ file, open, onOpenChange }: RenameModalProps) {
         }
     }, [file]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.SubmitEvent) => {
         e.preventDefault();
         if (!file || !name.trim()) {
             setError('O nome é obrigatório.');

@@ -21,6 +21,7 @@ class File extends Model
         'file_key',
         'url',
         'is_folder',
+        'storage_provider',
     ];
 
     protected $casts = [
@@ -87,22 +88,30 @@ class File extends Model
     }
 
     /**
-     * Coleta todas as chaves (file_keys) deste arquivo e de seus descendentes (para exclusão na API).
+     * Coleta as chaves (file_keys) deste arquivo e descendentes, agrupadas por provedor.
+     * @return array<string, array<string>>
      */
-    public function getAllFileKeys(): array
+    public function getKeysByProvider(): array
     {
-        $keys = [];
+        $groupedKeys = [];
 
         if ($this->file_key) {
-            $keys[] = $this->file_key;
+            $provider = $this->storage_provider ?? 'uploadthing';
+            $groupedKeys[$provider][] = $this->file_key;
         }
 
         if ($this->is_folder) {
             foreach ($this->children()->get() as $child) {
-                $keys = array_merge($keys, $child->getAllFileKeys());
+                $childKeys = $child->getKeysByProvider();
+                foreach ($childKeys as $provider => $keys) {
+                    if (!isset($groupedKeys[$provider])) {
+                        $groupedKeys[$provider] = [];
+                    }
+                    $groupedKeys[$provider] = array_merge($groupedKeys[$provider], $keys);
+                }
             }
         }
 
-        return $keys;
+        return $groupedKeys;
     }
 }

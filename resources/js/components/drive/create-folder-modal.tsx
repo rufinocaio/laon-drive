@@ -18,14 +18,15 @@ interface CreateFolderModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     parentId: string | null;
+    storageConfigId?: number | null;
 }
 
-export function CreateFolderModal({ open, onOpenChange, parentId }: CreateFolderModalProps) {
+export function CreateFolderModal({ open, onOpenChange, parentId, storageConfigId }: CreateFolderModalProps) {
     const [name, setName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.SubmitEvent) => {
         e.preventDefault();
 
         if (!name.trim()) {
@@ -41,6 +42,7 @@ export function CreateFolderModal({ open, onOpenChange, parentId }: CreateFolder
             {
                 name: name.trim(),
                 parent_id: parentId,
+                storage_config_id: storageConfigId,
             },
             {
                 onSuccess: () => {

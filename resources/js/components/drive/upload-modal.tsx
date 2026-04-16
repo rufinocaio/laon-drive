@@ -17,6 +17,7 @@ interface UploadModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     parentId: string | null;
+    storageConfigId?: number | null;
 }
 
 interface FileWithPreview {
@@ -25,7 +26,7 @@ interface FileWithPreview {
     preview?: string;
 }
 
-export function UploadModal({ open, onOpenChange, parentId }: UploadModalProps) {
+export function UploadModal({ open, onOpenChange, parentId, storageConfigId }: UploadModalProps) {
     const [files, setFiles] = useState<FileWithPreview[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -74,11 +75,12 @@ export function UploadModal({ open, onOpenChange, parentId }: UploadModalProps) 
         const formData = new FormData();
         files.forEach((f) => formData.append('files[]', f.file));
         if (parentId) formData.append('parent_id', parentId);
+        if (storageConfigId) formData.append('storage_config_id', storageConfigId.toString());
 
         router.post('/drive/upload', formData, {
             forceFormData: true,
             onProgress: (event) => {
-                if (event.percentage) setProgress(event.percentage);
+                if (event?.percentage) setProgress(event.percentage);
             },
             onSuccess: () => {
                 setFiles([]);

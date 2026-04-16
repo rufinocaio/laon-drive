@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\StorageController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -21,4 +22,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::get('settings/storage', [StorageController::class, 'index'])->name('storage.index');
+    Route::post('settings/storage', [StorageController::class, 'store'])->name('storage.store');
+    Route::put('settings/storage/{storage}', [StorageController::class, 'update'])->name('storage.update');
+    Route::delete('settings/storage/{storage}', [StorageController::class, 'destroy'])->name('storage.destroy');
 });
