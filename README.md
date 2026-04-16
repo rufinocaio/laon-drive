@@ -2,6 +2,8 @@
 
 Este projeto é uma aplicação de gerenciamento de arquivos (estilo cloud storage) desenvolvida com o objetivo de demonstrar competência técnica na integração de stacks modernas, arquitetura de software e manipulação de armazenamento externo.
 
+Foi implantada a API do Uploadthing para servir como base de dados para os arquivos, e também é possível que cada usuário cadastre novos buckets compatíveis com S3 na configuração do usuário, assim podendo administrar diversos buckets de arquivos.
+
 ---
 
 ## 🏗️ Base de Desenvolvimento
@@ -54,6 +56,7 @@ O projeto utiliza o **Inertia.js** para conectar o backend Laravel ao frontend R
     cp .env.example .env
     php artisan key:generate
     ```
+    É necessário adicionar a variável de ambiente 'UPLOADTHING_TOKEN' do Uploadthing para utilizar o 'Bucket Principal' 
 
 3.  **Banco de Dados:**
     ```bash
